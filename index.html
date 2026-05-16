@@ -1510,6 +1510,16 @@ const COACH_SECTIONS = [
 // ─── UTILITIES ────────────────────────────────────────────────────────────
 function parseYMD(s) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
 function formatYMD(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function weekToDate(weekNum, dueDateYMD) {
+  // LMP = due date - 280 days. Start of week N = LMP + (N * 7) days.
+  const due = parseYMD(dueDateYMD);
+  const lmp = new Date(due); lmp.setDate(lmp.getDate()-280);
+  const start = new Date(lmp); start.setDate(start.getDate() + (weekNum * 7));
+  return start;
+}
+function weekDateShort(weekNum, dueDateYMD) {
+  return weekToDate(weekNum, dueDateYMD).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
 function formatDate(ts, time=false) {
   const opts = {month:'short',day:'numeric'};
   if(time){opts.hour='numeric';opts.minute='2-digit';}
@@ -1753,7 +1763,7 @@ function App() {
             <div style={{fontSize:11,color:'rgba(255,255,255,0.75)',marginTop:2,letterSpacing:'0.03em'}}>
               {isCurrentWeek
                 ? `${currentGW.weeks}w ${currentGW.dayOfWeek}d · ${parseYMD(config.dueDate).toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${daysLeft}d to go`
-                : `tap to return to week ${currentGW.weeks}`}
+                : `week of ${weekDateShort(viewWeek, config.dueDate)} · tap to return to week ${currentGW.weeks}`}
             </div>
           </div>
           <button className="week-btn" disabled={viewWeek>=40} onClick={()=>setViewWeek(w=>Math.min(40,w+1))}>›</button>
@@ -1776,7 +1786,7 @@ function App() {
 
         {tab==='brief' && <BriefTab week={viewWeek} config={config} currentGW={currentGW} entries={entries} tasks={tasks} onGoToTasks={()=>setTab('plan')} />}
         {tab==='herweek' && <HerWeekTab week={viewWeek} config={config} entries={entries} setEntries={setEntries} coachOpen={coachOpen} setCoachOpen={setCoachOpen} coachItem={coachItem} setCoachItem={setCoachItem} />}
-        {tab==='plan' && <PlanTab tasks={tasks} planItems={planItems} week={currentGW.weeks} onToggleTask={toggleTask} onDeleteTask={deleteTask} onAddTask={()=>setAddingTask(true)} onTogglePlan={togglePlan} onEditPlan={setEditingPlan} notifPermission={notifPermission} />}
+        {tab==='plan' && <PlanTab tasks={tasks} planItems={planItems} week={currentGW.weeks} dueDate={config.dueDate} onToggleTask={toggleTask} onDeleteTask={deleteTask} onAddTask={()=>setAddingTask(true)} onTogglePlan={togglePlan} onEditPlan={setEditingPlan} notifPermission={notifPermission} />}
         {tab==='visits' && <VisitsTab appointments={appointments} onNew={()=>setEditingAppt({date:formatYMD(new Date()),title:'',provider:'',questions:'',notes:'',babyAWeight:'',babyBWeight:'',discordance:'',cervicalLength:''})} onEdit={setEditingAppt} />}
         {tab==='report' && <ReportTab entries={entries} appointments={appointments} week={viewWeek} reportDays={reportDays} setRptDays={setRptDays} copied={copied} onShare={shareReport} onClear={()=>{if(window.confirm('Clear all symptom logs?'))setEntries([]);}} config={config} />}
 
@@ -1786,7 +1796,7 @@ function App() {
       {showSettings && <SettingsModal config={config} setConfig={setConfig} onClose={()=>setShowSettings(false)} />}
       {editingAppt && <ApptModal appt={editingAppt} onSave={a=>{saveAppt(a);setEditingAppt(null);}} onClose={()=>setEditingAppt(null)} onDelete={id=>{setAppointments(prev=>prev.filter(a=>a.id!==id));setEditingAppt(null);}} />}
       {addingTask && <AddTaskModal onSave={t=>{addTask(t);setAddingTask(false);}} onClose={()=>setAddingTask(false)} />}
-  {editingPlan!==null && <PlanItemModal item={editingPlan} onSave={item=>{savePlanItem(item);setEditingPlan(null);}} onClose={()=>setEditingPlan(null)} onDelete={id=>{deletePlanItem(id);setEditingPlan(null);}} />}
+  {editingPlan!==null && <PlanItemModal item={editingPlan} dueDate={config.dueDate} onSave={item=>{savePlanItem(item);setEditingPlan(null);}} onClose={()=>setEditingPlan(null)} onDelete={id=>{deletePlanItem(id);setEditingPlan(null);}} />}
     </div>
   );
 }
@@ -2098,7 +2108,7 @@ function HerWeekTab({ week, config, entries, setEntries, coachOpen, setCoachOpen
 
 // ─── TASKS TAB ────────────────────────────────────────────────────────────
 // ─── PLAN TAB ──────────────────────────────────────────────────────────────
-function PlanTab({ tasks, planItems, week, onToggleTask, onDeleteTask, onAddTask, onTogglePlan, onEditPlan, notifPermission }) {
+function PlanTab({ tasks, planItems, week, dueDate, onToggleTask, onDeleteTask, onAddTask, onTogglePlan, onEditPlan, notifPermission }) {
   const [view, setView] = useState('timeline'); // 'timeline' | 'todos'
 
   const typeMap = {};
@@ -2146,7 +2156,7 @@ function PlanTab({ tasks, planItems, week, onToggleTask, onDeleteTask, onAddTask
           {dueNow.length>0&&(
             <div style={{marginBottom:16}}>
               <div className="sec-label" style={{color:'#B02020',marginBottom:8}}>⚠️ Due or overdue — {dueNow.length} item{dueNow.length>1?'s':''}</div>
-              {dueNow.map(item=><PlanItemRow key={item.id} item={item} currentWeek={week} typeMap={typeMap} onToggle={onTogglePlan} onEdit={onEditPlan} />)}
+              {dueNow.map(item=><PlanItemRow key={item.id} item={item} currentWeek={week} dueDate={dueDate} typeMap={typeMap} onToggle={onTogglePlan} onEdit={onEditPlan} />)}
             </div>
           )}
 
@@ -2165,10 +2175,17 @@ function PlanTab({ tasks, planItems, week, onToggleTask, onDeleteTask, onAddTask
                     letterSpacing:'0.04em'}}>
                     WEEK {w}
                   </div>
+                  <div style={{fontSize:11,color:isCurrent?'var(--navy)':'var(--muted)',fontWeight:500,letterSpacing:'0.03em'}}>
+                    week of {weekDateShort(w, dueDate)}
+                  </div>
                   <div style={{flex:1,height:1,background:isCurrent?'var(--gold)':isPast?'var(--border)':'var(--border2)'}}/>
                   {isPast&&<div style={{fontSize:11,color:'var(--muted)'}}>past</div>}
+                  <button onClick={()=>onEditPlan({week:w,type:'reminder',title:'',note:'',done:false,notify:true,custom:true})}
+                    style={{width:24,height:24,borderRadius:6,border:'1px solid var(--border2)',background:'var(--card2)',cursor:'pointer',fontSize:15,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)',flexShrink:0,lineHeight:1}}>
+                    +
+                  </button>
                 </div>
-                {items.map(item=><PlanItemRow key={item.id} item={item} currentWeek={week} typeMap={typeMap} onToggle={onTogglePlan} onEdit={onEditPlan}/>)}
+                {items.map(item=><PlanItemRow key={item.id} item={item} currentWeek={week} dueDate={dueDate} typeMap={typeMap} onToggle={onTogglePlan} onEdit={onEditPlan}/>)}
               </div>
             );
           })}
@@ -2188,22 +2205,20 @@ function PlanTab({ tasks, planItems, week, onToggleTask, onDeleteTask, onAddTask
             <div className="prog-bar"><div className="prog-fill" style={{width:`${pct}%`}}/></div>
           </div>
 
-          {/* Filter */}
-          <div className="filter-scroll" style={{marginBottom:12}}>
-            {TASK_CATEGORIES.map(c=>(
-              <div key={c.id} className={`filter-pill ${false?'active':''}`} onClick={()=>{}} style={{display:'none'}}/>
-            ))}
-            <TasksInner tasks={tasks} week={week} onToggle={onToggleTask} onDelete={onDeleteTask} />
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+            <div className="sec-label" style={{marginBottom:0}}>To-Dos</div>
+            <button onClick={onAddTask} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 12px',border:'1px solid var(--border2)',borderRadius:8,background:'var(--card2)',cursor:'pointer',fontSize:13,color:'var(--text2)',fontFamily:"'Inter',sans-serif",fontWeight:500}}>
+              + Add
+            </button>
           </div>
-
-          <button className="btn btn-ghost" onClick={onAddTask} style={{marginTop:8,width:'100%'}}>+ Add To-Do</button>
+          <TasksInner tasks={tasks} week={week} dueDate={dueDate} onToggle={onToggleTask} onDelete={onDeleteTask} />
         </div>
       )}
     </div>
   );
 }
 
-function TasksInner({ tasks, week, onToggle, onDelete }) {
+function TasksInner({ tasks, week, dueDate, onToggle, onDelete }) {
   const [filter, setFilter] = useState('now');
   const filtered = tasks.filter(t=>{
     if(filter==='all') return true;
@@ -2228,20 +2243,21 @@ function TasksInner({ tasks, week, onToggle, onDelete }) {
           <div style={{fontSize:14,color:'var(--muted)',lineHeight:1.6}}>Nothing due right now.</div>
         </div>
       )}
-      {pending.length>0&&<div style={{marginBottom:10}}>{pending.map(t=><TaskRow key={t.id} task={t} onToggle={onToggle} onDelete={onDelete}/>)}</div>}
+      {pending.length>0&&<div style={{marginBottom:10}}>{pending.map(t=><TaskRow key={t.id} task={t} dueDate={dueDate} onToggle={onToggle} onDelete={onDelete}/>)}</div>}
       {done.length>0&&(
         <div style={{marginTop:8}}>
           <div className="sec-label" style={{marginLeft:2,marginBottom:8,color:'var(--sage)'}}>Completed — {done.length}</div>
-          {done.map(t=><TaskRow key={t.id} task={t} onToggle={onToggle} onDelete={onDelete}/>)}
+          {done.map(t=><TaskRow key={t.id} task={t} dueDate={dueDate} onToggle={onToggle} onDelete={onDelete}/>)}
         </div>
       )}
     </div>
   );
 }
 
-function PlanItemRow({ item, currentWeek, typeMap, onToggle, onEdit }) {
+function PlanItemRow({ item, currentWeek, dueDate, typeMap, onToggle, onEdit }) {
   const type = typeMap[item.type] || {emoji:'📋',color:'var(--muted)',label:'Item'};
   const isOverdue = !item.done && item.week < currentWeek;
+  const dateLabel = dueDate ? weekDateShort(item.week, dueDate) : '';
   return (
     <div style={{display:'flex',alignItems:'flex-start',gap:10,padding:'10px 12px',background:'var(--card)',borderRadius:10,marginBottom:7,border:`1px solid ${isOverdue?'rgba(176,32,32,0.3)':'var(--border)'}`,opacity:item.done?0.55:1}}>
       <div className={`task-check ${item.done?'done':''}`} onClick={()=>onToggle(item.id)} style={{marginTop:1,borderColor:item.done?'var(--sage)':type.color}}>
@@ -2250,8 +2266,9 @@ function PlanItemRow({ item, currentWeek, typeMap, onToggle, onEdit }) {
       <div style={{flex:1,minWidth:0}} onClick={()=>onEdit(item)}>
         <div style={{fontSize:14,color:item.done?'var(--muted)':'var(--text2)',textDecoration:item.done?'line-through':'none',lineHeight:1.45,fontWeight:500}}>{item.title}</div>
         {item.note&&<div style={{fontSize:12,color:'var(--muted2)',marginTop:3,lineHeight:1.5}}>{item.note}</div>}
-        <div style={{display:'flex',gap:6,marginTop:4,alignItems:'center'}}>
+        <div style={{display:'flex',gap:6,marginTop:4,alignItems:'center',flexWrap:'wrap'}}>
           <span style={{fontSize:11,color:type.color,fontWeight:600}}>{type.emoji} {type.label}</span>
+          {dateLabel&&<span style={{fontSize:11,color:'var(--muted)'}}>· wk {item.week} · {dateLabel}</span>}
           {item.notify&&<span style={{fontSize:10,color:'var(--gold)'}}>🔔</span>}
           {isOverdue&&<span style={{fontSize:10,color:'#B02020',fontWeight:700}}>OVERDUE</span>}
         </div>
@@ -2261,7 +2278,7 @@ function PlanItemRow({ item, currentWeek, typeMap, onToggle, onEdit }) {
   );
 }
 
-function PlanItemModal({ item, onSave, onClose, onDelete }) {
+function PlanItemModal({ item, dueDate, onSave, onClose, onDelete }) {
   const [d, setD] = useState({...item});
   const u = patch => setD(prev=>({...prev,...patch}));
   const isNew = !item.id || item.custom;
@@ -2277,11 +2294,15 @@ function PlanItemModal({ item, onSave, onClose, onDelete }) {
         <input className="text-input" value={d.title} placeholder="What happens at this week?" onChange={e=>u({title:e.target.value})} style={{marginBottom:14}}/>
 
         <div className="sec-label">Week</div>
-        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
           <button onClick={()=>u({week:Math.max(4,d.week-1)})} style={{width:36,height:36,border:'1px solid var(--border2)',borderRadius:8,background:'var(--card2)',cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text2)'}}>−</button>
-          <div style={{flex:1,textAlign:'center',fontFamily:"'Barlow Condensed',sans-serif",fontSize:22,fontWeight:600,color:'var(--text2)'}}>Week {d.week}</div>
+          <div style={{flex:1,textAlign:'center'}}>
+            <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:22,fontWeight:600,color:'var(--text2)',lineHeight:1.1}}>Week {d.week}</div>
+            {dueDate&&<div style={{fontSize:12,color:'var(--muted)',marginTop:2}}>week of {weekDateShort(d.week, dueDate)}</div>}
+          </div>
           <button onClick={()=>u({week:Math.min(42,d.week+1)})} style={{width:36,height:36,border:'1px solid var(--border2)',borderRadius:8,background:'var(--card2)',cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text2)'}}>+</button>
         </div>
+        <div style={{marginBottom:14}}/>
 
         <div className="sec-label">Type</div>
         <div style={{display:'flex',flexWrap:'wrap',gap:7,marginBottom:14}}>
@@ -2325,9 +2346,10 @@ function PlanItemModal({ item, onSave, onClose, onDelete }) {
 
 
 
-function TaskRow({ task, onToggle, onDelete }) {
+function TaskRow({ task, dueDate, onToggle, onDelete }) {
   const catColors = {'Medical':'#2A6A86','Nursery':'#6050A0','Home':'#8B7355','Financial':'#9A7420','Postpartum':'#4A7E28','For Laura':'#B85A38'};
   const color = catColors[task.category]||'var(--muted)';
+  const dateLabel = dueDate ? weekDateShort(task.targetWeek, dueDate) : '';
   return (
     <div style={{display:'flex',alignItems:'flex-start',gap:12,padding:'11px 14px',background:'var(--card)',borderRadius:12,marginBottom:8,border:'1px solid var(--border)',opacity:task.done?0.6:1}}>
       <div className={`task-check ${task.done?'done':''}`} onClick={()=>onToggle(task.id)}>
@@ -2335,9 +2357,9 @@ function TaskRow({ task, onToggle, onDelete }) {
       </div>
       <div style={{flex:1,minWidth:0}}>
         <div style={{fontSize:16,color:task.done?'var(--muted)':'var(--dark)',textDecoration:task.done?'line-through':'none',lineHeight:1.5}}>{task.title}</div>
-        <div style={{display:'flex',gap:6,marginTop:4,alignItems:'center'}}>
+        <div style={{display:'flex',gap:6,marginTop:4,alignItems:'center',flexWrap:'wrap'}}>
           <span style={{fontSize:11,color:color,fontWeight:500}}>{task.emoji} {task.category}</span>
-          <span style={{fontSize:11,color:'var(--muted)'}}>· Wk {task.targetWeek}</span>
+          <span style={{fontSize:11,color:'var(--muted)'}}>· Wk {task.targetWeek}{dateLabel?` · ${dateLabel}`:''}</span>
         </div>
       </div>
       {task.custom && <span onClick={()=>{if(window.confirm('Delete this task?'))onDelete(task.id);}} style={{fontSize:18,color:'var(--muted)',cursor:'pointer',padding:'0 4px'}}>×</span>}
