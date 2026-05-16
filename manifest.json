@@ -1,8 +1,9 @@
 {
   "name": "Anchor",
   "short_name": "Anchor",
-  "description": "Be the calm in the storm \u2014 your weekly mission to support Laura through her twin pregnancy",
-  "start_url": "/index.html",
+  "description": "Be the calm in the storm — your weekly mission to support Laura through her twin pregnancy",
+  "start_url": "/Anchor-app/",
+  "scope": "/Anchor-app/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#16223A",
