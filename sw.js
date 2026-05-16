@@ -1,5 +1,6 @@
-const CACHE = 'mamas-journal-v2';
-const PRECACHE = ['/', '/index.html'];
+const CACHE = 'anchor-v3';
+const BASE = self.location.pathname.replace(/sw\.js$/, '');
+const PRECACHE = [BASE, BASE + 'index.html', BASE + 'manifest.json', BASE + 'icon-192.png', BASE + 'icon-512.png'];
 const CDN = [
   'https://fonts.googleapis.com',
   'https://fonts.gstatic.com',
@@ -21,11 +22,12 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
   const isCDN = CDN.some(d => e.request.url.startsWith(d));
 
   if (e.request.mode === 'navigate') {
-    e.respondWith(fetch(e.request).catch(() => caches.match('/index.html')));
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(BASE + 'index.html'))
+    );
     return;
   }
 
