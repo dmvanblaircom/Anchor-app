@@ -1,69 +1,98 @@
-# GRIND — Reclaim Your Standard
+# Anchor — Be the Calm in the Storm
 
-**14-week personal training program with squad accountability and pregnancy safe mode.**
-
----
-
-## QUICK START
-
-1. Deploy this folder to GitHub Pages (see DEPLOY.md)
-2. Open your GitHub Pages URL in Safari on your phone
-3. Share → Add to Home Screen → GRIND
-4. Set up your name, gender, and mode on first launch
-5. Connect Supabase for squad features (see SQUAD-SETUP.md)
+Your weekly companion for supporting Laura through her MCDA twin pregnancy.
+Built for David. Not for Laura — she has the babies covered.
 
 ---
 
-## FILES
+## Install on iPhone
+
+**Option A — Direct file (simplest):**
+1. AirDrop or email `index.html` to your iPhone
+2. Open it in **Safari** (not Chrome)
+3. Tap the Share icon → **Add to Home Screen**
+4. Name it **Anchor** → tap Add
+
+**Option B — Local server (full PWA, offline caching):**
+1. On your Mac, open Terminal in the unzipped folder
+2. Run: `python3 -m http.server 8080`
+3. On your iPhone (same WiFi), open Safari → `http://[your Mac's IP]:8080`
+4. Share → Add to Home Screen
+
+Option B enables full offline support and the service worker cache. Option A works fine for daily use.
+
+---
+
+## What's in the zip
 
 | File | Purpose |
 |------|---------|
-| `index.html` | The entire app — self-contained |
-| `manifest.json` | PWA config |
-| `sw.js` | Service worker — offline mode |
-| `icon-512.svg` | App icon (large) |
-| `icon-192.svg` | App icon (small) |
-| `apple-touch-icon.svg` | iOS home screen icon |
-| `SQUAD-SETUP.md` | Connect the shared squad feed |
+| `index.html` | The entire app — all data, all components, self-contained |
+| `manifest.json` | PWA metadata (name, icons, theme) |
+| `sw.js` | Service worker for offline caching |
+| `icon-192.png` | Home screen icon |
+| `icon-512.png` | Splash screen icon |
 | `README.md` | This file |
 
 ---
 
-## FEATURES
+## Tabs
 
-| Tab | What it does |
-|-----|-------------|
-| **TODAY** | Daily check-in · Week briefing · Today's workout · Protein bar |
-| **PLAN** | Full 14-week plan · Proactive rescheduling · Move workouts ahead |
-| **LOG** | Log sets, reps, weight · Save + Send to Squad |
-| **FUEL** | Protein tracking · Quick-add foods · Timing guidance |
-| **BUILD** | Offline workout generator · Home/away · Pregnancy safe mode |
-| **SQUAD** | Live squad activity feed · Expandable workout details |
-| **STATS** | Completion rate · PT benchmarks · Body metrics · History |
+**Brief** — Your weekly mission. Open this every week. Her emotional reality first, then baby snapshot, then your four-dimension mission, letter prompt, look ahead 2–4 weeks, and Fill Your Cup.
 
----
+**Her Week** — Deeper reference when you want it: baby development, Laura's body, nutrition, MCDA monitoring logs, OB question templates, full Twin Pregnancy Guide accordion.
 
-## PREGNANCY SAFE MODE
+**Tasks** — 55+ pre-populated tasks organized by category and target week. Filters: Now · All · Medical · Nursery · Home · Financial · Postpartum · For Laura. Add custom tasks. Track progress.
 
-For female users — toggle on during profile setup or via Program Settings.
-- Modifies the BUILD workout generator to pregnancy-safe exercises only
-- Flags exercises in your plan that need modification (with notes)
-- Marks exercises to skip entirely with a red warning
-- Includes pelvic floor work in every session
-- Safe across all trimesters
+**Visits** — Appointment tracker with MCDA measurement fields: Baby A/B weight, discordance %, cervical length. Tap-to-add MCDA question templates.
+
+**Report** — Generates a plain-text OB symptom report from logged entries. Copy or share directly to your care team.
 
 ---
 
-## THE PROGRAM (for the primary user)
+## The Four Dimensions
 
-| Phase | Weeks | Focus |
-|-------|-------|-------|
-| 01 REACTIVATION | 1–2 | Bodyweight · 4 days/week |
-| 02 FOUNDATION | 3–5 | Dumbbells · 5 days/week |
-| 03 BUILD | 6–8 | Heavier · Conditioning |
-| 04 PROVE IT | 9–10 | Max effort · Benchmarks |
-| 05 FINISH STRONG | 11–14 | Final push · July 31 test |
+Every week's Brief gives you one specific action in each:
+
+- 🧠 **Emotional** — What she needs to feel from you this week
+- 🙏 **Spiritual** — How to carry this together in faith
+- 💑 **Relational** — How to nurture the marriage in this season
+- 💪 **Physical** — Practical things that serve her body
 
 ---
 
-*No ads. No tracking. Data stays on your device (except squad workouts shared via Supabase).*
+## The Letter
+
+Each week surfaces a suggested opening line for a handwritten letter. Write it on paper. Deliver it that week. The app never stores the letter — it's between you and her.
+
+---
+
+## MCDA Configuration
+
+Pre-configured for Laura's confirmed MCDA (mono-chorionic, di-amniotic) identical twin pregnancy:
+
+- Biweekly growth scan tracking from week 16
+- TTTS watch window alert active weeks 16–26
+- Baby A and Baby B movement logging (separate)
+- TTTS warning sign log with OB call prompt
+- Discordance % tracking at each appointment
+- Cervical length field on every visit
+
+**Due date:** December 2, 2026
+**Conception:** March 11, 2026
+
+To change any settings: open the app → ⚙ gear icon (top right).
+
+---
+
+## Data & Privacy
+
+All data stays on your device. Nothing is sent to any server. localStorage keys:
+
+- `anc-config` — settings
+- `anc-week` — last viewed week
+- `anc-entries` — symptom and movement logs
+- `anc-appts` — appointment records
+- `anc-tasks` — task list with completion state
+
+To share data between your phone and Laura's (if she wants to log): use the sync export (generates a URL hash) in the app.
